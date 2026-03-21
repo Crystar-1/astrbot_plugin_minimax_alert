@@ -2,7 +2,7 @@ from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
 from astrbot.api import AstrBotConfig, logger
 import aiohttp
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 
@@ -27,6 +27,7 @@ class MiniMaxAlertPlugin(Star):
 
     async def initialize(self):
         logger.info("MiniMax Alert 插件初始化中...")
+        await self._ensure_session()
 
     async def _ensure_session(self):
         if self._session is None or self._session.closed:
@@ -49,7 +50,7 @@ class MiniMaxAlertPlugin(Star):
     def format_timestamp(self, ts: int) -> str:
         if ts <= 0:
             return "未知"
-        return datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        return datetime.fromtimestamp(ts / 1000, tz=timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
 
     async def fetch_quota(self, api_key: str, region: str, group_id: str) -> dict:
         await self._ensure_session()
@@ -68,7 +69,8 @@ class MiniMaxAlertPlugin(Star):
 
                 if response.status == 200:
                     data = await response.json()
-                    logger.info(f"API 请求成功，返回数据长度: {len(str(data))}")
+                    data_keys = len(data) if isinstance(data, dict) else (len(data) if isinstance(data, list) else 0)
+                    logger.info(f"API 请求成功，返回数据包含 {data_keys} 个字段")
                     return data
                 else:
                     title, suggestion = ERROR_MESSAGES.get(
@@ -118,16 +120,17 @@ class MiniMaxAlertPlugin(Star):
 
         if status_code is not None and status_code != 0:
             error_msg = base_resp.get("status_msg", "未知错误")
+            error_msg_lower = error_msg.lower()
             error_map = {
                 "invalid_token": "API Key 无效，请检查配置",
                 "token_expired": "API Key 已过期，请重新获取",
                 "quota_exceeded": "额度已用尽，请等待重置",
-                "rate_limited": "请求过于频繁，请稍后重试",
+                "rate_limited": "请求过于频繁，请稍后再试",
                 "group_not_found": "Group ID 不存在，请检查配置",
                 "permission_denied": "无权限访问，请确认账户状态",
             }
             for key, msg in error_map.items():
-                if key in error_msg.lower():
+                if key in error_msg_lower:
                     logger.error(f"API 返回业务错误: {msg} ({error_msg})")
                     raise QueryError(f"API 返回错误：{msg}（{error_msg}）")
             logger.error(f"API 返回未知错误: {error_msg} (状态码: {status_code})")
@@ -138,7 +141,7 @@ class MiniMaxAlertPlugin(Star):
             logger.warning("model_remains 列表为空")
             raise QueryError("未获取到任何额度数据，接口返回格式可能已变更")
 
-        logger.info(f"解析额度数据（{len(model_list)} 个模型，共用用量）")
+        logger.info(f"解析额度数据（共 {len(model_list)} 个模型）")
 
         model = model_list[0]
         missing_fields = [f for f in self.REQUIRED_FIELDS if model.get(f) is None]
@@ -158,22 +161,26 @@ class MiniMaxAlertPlugin(Star):
 
         end_time_ms = model.get('end_time', 0)
         if end_time_ms > 0:
-            end_time = datetime.fromtimestamp(end_time_ms / 1000, tz=timezone.utc)
-            now = datetime.now(tz=timezone.utc)
+            china_tz = timezone(timedelta(hours=8))
+            end_time = datetime.fromtimestamp(end_time_ms / 1000, tz=china_tz)
+            now = datetime.now(tz=china_tz)
             delta = end_time - now
             remains_time_minutes = max(0, int(delta.total_seconds() / 60))
         else:
             remains_time_minutes = 0
 
-        result = "套餐：MiniMax Token Plan\n"
-        result += f"5小时剩余/总额：{intv_remain}/{intv_total} ({intv_percent:.1f}%)\n"
-        result += f"本周剩余/总额：{week_remain}/{week_total} ({week_percent:.1f}%)\n"
-        result += f"\n📅 5小时滚动周期：{self.format_timestamp(model.get('start_time', 0))} ~ {self.format_timestamp(model.get('end_time', 0))}\n"
-        result += f"📅 本周周期：{self.format_timestamp(model.get('weekly_start_time', 0))} ~ {self.format_timestamp(model.get('weekly_end_time', 0))}\n"
-        result += f"⏰ 距离5小时重置：{remains_time_minutes} 分钟\n"
-        result += f"\n✅ 查询完成！"
-
-        return result
+        lines = [
+            "套餐：MiniMax Token Plan",
+            f"5小时剩余/总额：{intv_remain}/{intv_total} ({intv_percent:.1f}%)",
+            f"本周剩余/总额：{week_remain}/{week_total} ({week_percent:.1f}%)",
+            "",
+            f"📅 5小时滚动周期：{self.format_timestamp(model.get('start_time', 0))} ~ {self.format_timestamp(model.get('end_time', 0))}",
+            f"📅 本周周期：{self.format_timestamp(model.get('weekly_start_time', 0))} ~ {self.format_timestamp(model.get('weekly_end_time', 0))}",
+            f"⏰ 距离5小时重置：{remains_time_minutes} 分钟",
+            "",
+            "✅ 查询完成！",
+        ]
+        return "\n".join(lines)
 
     @filter.command("用量")
     async def query_quota(self, event: AstrMessageEvent):
@@ -203,9 +210,12 @@ class MiniMaxAlertPlugin(Star):
 
     async def terminate(self):
         if self._session and not self._session.closed:
+            logger.info("正在关闭 ClientSession...")
             await self._session.close()
             self._session = None
             logger.info("ClientSession 已关闭")
+        else:
+            logger.info("ClientSession 无需关闭（已为空或已关闭）")
 
 
 class QueryError(Exception):
