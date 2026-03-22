@@ -13,7 +13,10 @@
         "hint": "国内版使用 minimaxi.com，国际版使用 platform.minimax.io。",
         "obvious_hint": false,
         "default": "国内",
-        "options": ["国内", "国际"],
+        "options": [
+            "国内",
+            "国际"
+        ],
         "category": "minimax"
     },
     "group_id": {
@@ -26,7 +29,7 @@
     },
     "whitelist": {
         "description": "白名单用户 SID 列表，为空则允许所有用户",
-        "type": "array",
+        "type": "list",
         "hint": "配置允许使用此插件的用户 SID 列表，留空则允许所有用户。",
         "obvious_hint": false,
         "default": [],
