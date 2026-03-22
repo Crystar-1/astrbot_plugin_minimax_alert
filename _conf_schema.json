@@ -23,5 +23,13 @@
         "obvious_hint": false,
         "default": "",
         "category": "minimax"
+    },
+    "whitelist": {
+        "description": "白名单用户 SID 列表，为空则允许所有用户",
+        "type": "array",
+        "hint": "配置允许使用此插件的用户 SID 列表，留空则允许所有用户。",
+        "obvious_hint": false,
+        "default": [],
+        "category": "minimax"
     }
 }
