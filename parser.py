@@ -100,6 +100,13 @@ class DataParser:
 
         model_outputs = []
         for idx, model in enumerate(model_list):
+            # 过滤掉 token plan 不支持的模型（5小时和周限额都为 0）
+            intv_total = model.get("current_interval_total_count", 0)
+            week_total = model.get("current_weekly_total_count", 0)
+            if intv_total == 0 and week_total == 0:
+                logger.info(f"模型 {model.get('model_name', idx)} 无额度，跳过")
+                continue
+
             missing_fields = [f for f in self.REQUIRED_FIELDS if model.get(f) is None]
             if missing_fields:
                 logger.warning(f"模型 {idx} 缺少必填字段: {missing_fields}")
