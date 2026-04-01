@@ -1,6 +1,6 @@
 # MiniMax Token Plan 用量查询插件
 
-专为 AstrBot 开发的 MiniMax API Token Plan 用量查询插件，支持 QQ 私聊和群聊场景。
+专为 AstrBot 开发的 MiniMax API Token Plan 用量查询插件，多个平台可用。
 
 ## 功能特性
 
