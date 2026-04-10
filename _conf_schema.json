@@ -34,5 +34,21 @@
         "obvious_hint": false,
         "default": [],
         "category": "minimax"
+    },
+    "show_year": {
+        "description": "是否显示年份",
+        "type": "bool",
+        "hint": "开启后在时间显示中包含年份（如 2026-04-10），默认关闭。",
+        "obvious_hint": false,
+        "default": false,
+        "category": "display"
+    },
+    "show_first_model_only": {
+        "description": "仅显示第一个模型的用量",
+        "type": "bool",
+        "hint": "开启后仅展示第一个模型的用量信息，隐藏其他模型的展示。关闭（默认）则显示所有模型的用量。",
+        "obvious_hint": false,
+        "default": false,
+        "category": "display"
     }
 }

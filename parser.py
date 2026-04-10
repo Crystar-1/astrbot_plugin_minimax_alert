@@ -4,6 +4,7 @@ from .api import QueryError
 from astrbot.api import logger
 
 
+# 中国时区偏移量（UTC+8）
 CHINA_TIMEZONE_OFFSET = 8
 
 PLAN_NAMES = {
@@ -12,6 +13,10 @@ PLAN_NAMES = {
     4500: "Max",
     30000: "Ultra",
 }
+
+# 重置周期识别范围（小时）
+HOURLY_RESET_RANGE = (4, 6)
+DAILY_RESET_RANGE = (23, 25)
 
 
 class DataParser:
@@ -28,48 +33,55 @@ class DataParser:
         "weekly_end_time",
     ]
 
+    def __init__(self, show_year: bool = False, show_first_model_only: bool = False):
+        """初始化数据解析器"""
+        self._show_year = show_year
+        self._show_first_model_only = show_first_model_only
+
     def format_timestamp(self, ts: int) -> str:
-        """
-        格式化时间戳为可读字符串
-
-        Args:
-            ts: 毫秒级时间戳
-
-        Returns:
-            格式化的日期时间字符串
-        """
+        """将毫秒级时间戳转换为可读字符串"""
         if ts <= 0:
             return "未知"
-        return datetime.fromtimestamp(
+        dt = datetime.fromtimestamp(
             ts / 1000,
             tz=timezone(timedelta(hours=CHINA_TIMEZONE_OFFSET))
-        ).strftime("%Y-%m-%d %H:%M:%S")
+        )
+        if self._show_year:
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        return dt.strftime("%m-%d %H:%M:%S")
     
     def _get_plan_name(self, intv_total: int) -> str:
+        """根据五小时总额获取套餐名称"""
+        return PLAN_NAMES.get(intv_total, "Token Plan")
+    
+    def _format_duration(self, minutes: int) -> str:
+        """格式化时长为"X小时Y分钟"格式"""
+        hours = minutes // 60
+        mins = minutes % 60
+        if hours > 0:
+            return f"{hours}小时{mins}分钟"
+        return f"{mins}分钟"
+    
+    def _detect_reset_type(self, start_time: int, end_time: int) -> str:
         """
-        根据五小时总额获取套餐名称
-
-        Args:
-            intv_total: 五小时总额
+        识别重置周期类型
 
         Returns:
-            套餐名称
+            "5h" | "daily" | "unknown"
         """
-        return PLAN_NAMES.get(intv_total, "Token Plan")
+        if start_time <= 0 or end_time <= 0:
+            return "unknown"
+        duration_hours = (end_time - start_time) / (1000 * 60 * 60)
+        min_hour, max_hour = HOURLY_RESET_RANGE
+        if min_hour <= duration_hours <= max_hour:
+            return "5h"
+        min_hour, max_hour = DAILY_RESET_RANGE
+        if min_hour <= duration_hours <= max_hour:
+            return "daily"
+        return "unknown"
 
     def parse_quota_data(self, data: Dict[str, Any]) -> str:
-        """
-        解析配额数据并格式化输出
-
-        Args:
-            data: API 返回的配额数据
-
-        Returns:
-            格式化的输出字符串
-
-        Raises:
-            QueryError: 数据解析失败时抛出
-        """
+        """解析配额数据并格式化输出"""
         base_resp = data.get("base_resp", {})
         status_code = base_resp.get("status_code")
 
@@ -98,23 +110,13 @@ class DataParser:
 
         logger.info(f"解析额度数据（共 {len(model_list)} 个模型）")
 
-        model = model_list[0]
-        missing_fields = [f for f in self.REQUIRED_FIELDS if model.get(f) is None]
+        first_model = model_list[0]
+        missing_fields = [f for f in self.REQUIRED_FIELDS if first_model.get(f) is None]
         if missing_fields:
             logger.warning(f"缺少必填字段: {missing_fields}")
             raise QueryError(f"数据格式异常，缺少必填字段: {', '.join(missing_fields)}")
 
-        intv_total = model.get("current_interval_total_count", 0)
-        intv_used = model.get("current_interval_usage_count", 0)
-        intv_remain = intv_total - intv_used
-        intv_percent = (intv_remain / intv_total) * 100 if intv_total > 0 else 0
-
-        week_total = model.get("current_weekly_total_count", 0)
-        week_used = model.get("current_weekly_usage_count", 0)
-        week_remain = week_total - week_used
-        week_percent = (week_remain / week_total) * 100 if week_total > 0 else 0
-
-        end_time_ms = model.get('end_time', 0)
+        end_time_ms = first_model.get('end_time', 0)
         if end_time_ms > 0:
             china_tz = timezone(timedelta(hours=CHINA_TIMEZONE_OFFSET))
             end_time = datetime.fromtimestamp(end_time_ms / 1000, tz=china_tz)
@@ -124,57 +126,61 @@ class DataParser:
         else:
             remains_time_minutes = 0
 
-        return self.format_output(
-            intv_remain=intv_remain,
-            intv_total=intv_total,
-            intv_percent=intv_percent,
-            week_remain=week_remain,
-            week_total=week_total,
-            week_percent=week_percent,
-            start_time=model.get('start_time', 0),
-            end_time=model.get('end_time', 0),
-            weekly_start_time=model.get('weekly_start_time', 0),
-            weekly_end_time=model.get('weekly_end_time', 0),
-            remains_time_minutes=remains_time_minutes,
-        )
-
-    def format_output(
-        self,
-        intv_remain: int,
-        intv_total: int,
-        intv_percent: float,
-        week_remain: int,
-        week_total: int,
-        week_percent: float,
-        start_time: int,
-        end_time: int,
-        weekly_start_time: int,
-        weekly_end_time: int,
-        remains_time_minutes: int,
-    ) -> str:
-        """
-        格式化输出信息
-
-        Returns:
-            格式化的输出字符串
-        """
+        intv_total = first_model.get("current_interval_total_count", 0)
         plan_name = self._get_plan_name(intv_total)
-        intv_line = f"5小时剩余/总额：{intv_remain}/{intv_total} ({intv_percent:.1f}%)"
+
+        lines = [f"套餐：MiniMax Token Plan {plan_name}"]
+
+        for idx, model in enumerate(model_list):
+            if self._show_first_model_only and idx > 0:
+                continue
+            
+            intv_total = model.get("current_interval_total_count", 0)
+            week_total = model.get("current_weekly_total_count", 0)
+            if intv_total == 0 and week_total == 0 and idx > 0:
+                continue
+            
+            model_name = model.get("model_name", "未知模型")
+            start_time = model.get("start_time", 0)
+            end_time = model.get("end_time", 0)
+            intv_used = model.get("current_interval_usage_count", 0)
+            intv_remain = intv_total - intv_used
+            intv_percent = (intv_remain / intv_total) * 100 if intv_total > 0 else 0
+            week_used = model.get("current_weekly_usage_count", 0)
+            week_remain = week_total - week_used
+            week_percent = (week_remain / week_total) * 100 if week_total > 0 else 0
+
+            lines.append(f"🤖 {model_name}")
+            
+            if intv_total == 0:
+                intv_line = "日剩余/总额：0/0 (0.0%)"
+            else:
+                intv_line = f"日剩余/总额：{intv_remain}/{intv_total} ({intv_percent:.1f}%)"
+            lines.append(intv_line)
+            
+            if week_total == 0:
+                week_line = "本周剩余/总额：无周限额"
+            else:
+                week_line = f"本周剩余/总额：{week_remain}/{week_total} ({week_percent:.1f}%)"
+            lines.append(week_line)
+
+        lines.append("")
         
-        if week_total == 0 and week_remain == 0:
-            week_line = "本周剩余/总额：无周限额"
+        first_reset_type = self._detect_reset_type(first_model.get('start_time', 0), first_model.get('end_time', 0))
+        if first_reset_type == "5h":
+            period_name = "5小时滚动周期"
+            reset_label = "距离5小时重置"
+        elif first_reset_type == "daily":
+            period_name = "日周期"
+            reset_label = "距离日重置"
         else:
-            week_line = f"本周剩余/总额：{week_remain}/{week_total} ({week_percent:.1f}%)"
+            period_name = "周期"
+            reset_label = "距离重置"
         
-        lines = [
-            f"套餐：MiniMax Token Plan {plan_name}",
-            intv_line,
-            week_line,
-            "",
-            f"📅 5小时滚动周期：{self.format_timestamp(start_time)} ~ {self.format_timestamp(end_time)}",
-            f"📅 本周周期：{self.format_timestamp(weekly_start_time)} ~ {self.format_timestamp(weekly_end_time)}",
-            f"⏰ 距离5小时重置：{remains_time_minutes} 分钟",
-            "",
-            "✅ 查询完成！",
-        ]
+        lines.append(f"📅 {period_name}：{self.format_timestamp(first_model.get('start_time', 0))} ~ {self.format_timestamp(first_model.get('end_time', 0))}")
+        lines.append(f"📅 本周周期：{self.format_timestamp(first_model.get('weekly_start_time', 0))} ~ {self.format_timestamp(first_model.get('weekly_end_time', 0))}")
+        lines.append(f"⏰ {reset_label}：{self._format_duration(remains_time_minutes)}")
+        lines.append("")
+        lines.append("✅ 查询完成！")
+        
         return "\n".join(lines)

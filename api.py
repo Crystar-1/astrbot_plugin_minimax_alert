@@ -39,19 +39,7 @@ class MiniMaxAPI:
             self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10))
     
     def _get_api_url(self, region: str, group_id: str) -> tuple[str, Dict[str, str]]:
-        """
-        获取 API URL 和参数
-        
-        Args:
-            region: 区域（国内/国际）
-            group_id: Group ID（国际版必需）
-            
-        Returns:
-            (url, params) 元组
-            
-        Raises:
-            ValueError: 配置错误
-        """
+        """获取 API URL 和参数"""
         params: Dict[str, str] = {}
         if region == "国内":
             url = "https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains"
@@ -67,17 +55,6 @@ class MiniMaxAPI:
     async def fetch_quota(self, api_key: str, region: str, group_id: str) -> Dict[str, Any]:
         """
         获取配额信息
-        
-        Args:
-            api_key: API 密钥
-            region: 区域
-            group_id: Group ID
-            
-        Returns:
-            API 返回的数据字典
-            
-        Raises:
-            QueryError: 查询失败
         """
         await self._ensure_session()
         

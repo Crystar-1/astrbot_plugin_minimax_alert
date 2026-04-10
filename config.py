@@ -1,5 +1,5 @@
 from .whitelist import WhitelistManager
-from astrbot.api import AstrBotConfig
+from astrbot.api import AstrBotConfig  # noqa: F401
 
 
 class ConfigManager:
@@ -18,47 +18,30 @@ class ConfigManager:
         )
     
     def get_whitelist(self) -> WhitelistManager:
-        """
-        获取白名单管理器
-        
-        Returns:
-            WhitelistManager 实例
-        """
+        """获取白名单管理器"""
         return self._whitelist_manager
     
     def update_whitelist_config(self, whitelist: list[str]):
-        """
-        更新白名单配置并持久化
-        
-        Args:
-            whitelist: 新的白名单列表
-        """
+        """更新白名单配置并持久化"""
         self._config["whitelist"] = whitelist
         self._whitelist_manager.set_whitelist(whitelist)
     
     def get_api_key(self) -> str:
-        """
-        获取 API Key
-        
-        Returns:
-            API Key 字符串
-        """
+        """获取 API Key"""
         return self._config.get("api_key", "")
     
     def get_region(self) -> str:
-        """
-        获取地区配置
-        
-        Returns:
-            地区字符串（"国内" 或 "国际"）
-        """
+        """获取地区配置"""
         return self._config.get("region", "国内")
     
     def get_group_id(self) -> str:
-        """
-        获取 Group ID
-        
-        Returns:
-            Group ID 字符串
-        """
+        """获取 Group ID"""
         return self._config.get("group_id", "")
+    
+    def get_show_year(self) -> bool:
+        """获取是否显示年份配置"""
+        return self._config.get("show_year", False)
+    
+    def get_show_first_model_only(self) -> bool:
+        """获取是否仅显示第一个模型配置"""
+        return self._config.get("show_first_model_only", False)
