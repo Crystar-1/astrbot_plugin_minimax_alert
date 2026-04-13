@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.3.1] - 2026-04-10
+
+### 改进
+- 优化输出标签显示为"使用/总额"格式
+- 各模型根据实际重置类型动态显示标签（5小时/日）
+- 优化百分比计算逻辑
+
+### 代码优化
+- 简化 `config.py` docstring
+- 移除冗余变量，优化代码结构
+
+---
+
 ## [v1.3.0] - 2026-03-25
 
 ### 致谢
@@ -22,7 +35,6 @@
 | `_conf_schema.json` | 新增 `show_first_model_only` 配置项 |
 | `config.py` | 新增 `get_show_first_model_only()` 方法 |
 | `main.py` | 传递新配置到 DataParser |
-| `metadata.yaml` | 版本更新至 v1.3.0 |
 
 ---
 

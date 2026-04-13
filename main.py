@@ -8,7 +8,7 @@ from .parser import DataParser
 from .whitelist import WhitelistManager
 
 
-@register("astrbot_plugin_minimax_alert", "MiniMax_Alert", "查询 MiniMax Token Plan API 用量信息", "v1.3.0")
+@register("astrbot_plugin_minimax_alert", "MiniMax_Alert", "查询 MiniMax Token Plan API 用量信息", "v1.3.1")
 class MiniMaxAlertPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)

@@ -1,8 +1,5 @@
 # MiniMax Token Plan 用量查询插件
 
-[![版本](https://img.shields.io/badge/version-v1.3.0-blue)](https://github.com/Crystar-1/astrbot_plugin_minimax_alert)
-[![许可证](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-
 专为 AstrBot 开发的 MiniMax API Token Plan 用量查询插件，支持 QQ 私聊和群聊场景。
 
 ## 功能特性
@@ -112,20 +109,6 @@ astrbot_plugin_minimax_alert/
 ├── CHANGELOG.md         # 变更日志
 └── README.md            # 项目文档
 ```
-
----
-
-## 更新日志
-
-### v1.3.0 (2026-03-25)
-
-- **多模型支持**: 支持展示所有 Token Plan 模型的用量额度
-- **智能过滤**: 自动过滤无额度模型
-- **重置类型检测**: 新增 `detect_reset_type()` 函数，智能识别重置周期类型
-- **时间格式化**: 优化剩余时间显示格式（天/小时/分钟）
-- **仅显示第一个模型**: 新增配置选项，可选择仅展示第一个模型的用量
-
-详见 [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
