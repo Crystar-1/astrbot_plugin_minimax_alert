@@ -6,12 +6,7 @@ class ConfigManager:
     """配置管理器"""
     
     def __init__(self, config: AstrBotConfig):
-        """
-        初始化配置管理器
-        
-        Args:
-            config: AstrBot 配置对象
-        """
+        """初始化配置管理器"""
         self._config = config
         self._whitelist_manager = WhitelistManager(
             whitelist=config.get("whitelist", [])

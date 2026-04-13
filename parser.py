@@ -135,20 +135,19 @@ class DataParser:
             if self._show_first_model_only and idx > 0:
                 continue
             
-            intv_total = model.get("current_interval_total_count", 0)
-            week_total = model.get("current_weekly_total_count", 0)
-            if intv_total == 0 and week_total == 0 and idx > 0:
-                continue
-            
             model_name = model.get("model_name", "未知模型")
             start_time = model.get("start_time", 0)
             end_time = model.get("end_time", 0)
             intv_used = model.get("current_interval_usage_count", 0)
-            intv_remain = intv_total - intv_used
-            intv_percent = (intv_remain / intv_total) * 100 if intv_total > 0 else 0
+            intv_total = model.get("current_interval_total_count", 0)
             week_used = model.get("current_weekly_usage_count", 0)
-            week_remain = week_total - week_used
-            week_percent = (week_remain / week_total) * 100 if week_total > 0 else 0
+            week_total = model.get("current_weekly_total_count", 0)
+            
+            if intv_total == 0 and week_total == 0 and idx > 0:
+                continue
+            
+            intv_percent = (intv_used / intv_total) * 100 if intv_total > 0 else 0
+            week_percent = (week_used / week_total) * 100 if week_total > 0 else 0
 
             model_reset_type = self._detect_reset_type(start_time, end_time)
             if model_reset_type == "5h":
