@@ -150,18 +150,24 @@ class DataParser:
             week_remain = week_total - week_used
             week_percent = (week_remain / week_total) * 100 if week_total > 0 else 0
 
+            model_reset_type = self._detect_reset_type(start_time, end_time)
+            if model_reset_type == "5h":
+                intv_label = "5小时使用/总额"
+            else:
+                intv_label = "日使用/总额"
+
             lines.append(f"🤖 {model_name}")
             
             if intv_total == 0:
-                intv_line = "日剩余/总额：0/0 (0.0%)"
+                intv_line = f"{intv_label}：0/0 (0.0%)"
             else:
-                intv_line = f"日剩余/总额：{intv_remain}/{intv_total} ({intv_percent:.1f}%)"
+                intv_line = f"{intv_label}：{intv_used}/{intv_total} ({intv_percent:.1f}%)"
             lines.append(intv_line)
             
             if week_total == 0:
-                week_line = "本周剩余/总额：无周限额"
+                week_line = "周使用/总额：无周限额"
             else:
-                week_line = f"本周剩余/总额：{week_remain}/{week_total} ({week_percent:.1f}%)"
+                week_line = f"周使用/总额：{week_used}/{week_total} ({week_percent:.1f}%)"
             lines.append(week_line)
 
         lines.append("")
