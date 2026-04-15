@@ -188,7 +188,7 @@ class DataParser:
         lines.append(f"📅 本周周期：{self.format_timestamp(first_model.get('weekly_start_time', 0))} ~ {self.format_timestamp(first_model.get('weekly_end_time', 0))}")
         lines.append(f"⏰ {reset_label}：{self._format_duration(remains_time_minutes)}")
         lines.append("")
-        lines.append("AstrBot查询成功🎉")
+        lines.append("✅ AstrBot查询完成！")
         
         return "\n".join(lines)
     

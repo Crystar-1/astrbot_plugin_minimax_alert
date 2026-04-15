@@ -199,7 +199,7 @@ class QuotaDrawer:
         draw.text((self.PADDING + 20, y_offset + 61), reset_text, font=self.font_label, fill=self.COLOR_ACCENT)
         y_offset += self.INFO_HEIGHT + self.SECTION_SPACING
 
-        footer_text = "AstrBot查询成功🎉"
+        footer_text = "AstrBot查询完成🎉"
         bbox = draw.textbbox((0, 0), footer_text, font=self.font_footer)
         fw = bbox[2] - bbox[0]
         draw.text(((self.IMG_WIDTH - fw) // 2, y_offset + 10), footer_text, font=self.font_footer, fill=self.COLOR_FOOTER)
