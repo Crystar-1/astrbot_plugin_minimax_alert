@@ -84,7 +84,7 @@ class QuotaDrawer:
     def _draw_card(self, draw: ImageDraw.ImageDraw, x: int, y: int, width: int, model_name: str,
                    intv_used: int, intv_total: int, intv_label: str,
                    week_used: int, week_total: int, has_week_limit: bool):
-        card_h = 149 if has_week_limit else 100
+        card_h = 136 if has_week_limit else 100
         self._draw_rounded_rect(draw, (x, y, x + width, y + card_h), self.CARD_CORNER_RADIUS,
                                 fill=self.COLOR_CARD_BG, outline=self.COLOR_CARD_BORDER, width=1)
 
@@ -119,7 +119,7 @@ class QuotaDrawer:
 
         if has_week_limit:
             intv_end_y = y + 45 + 28 + 10
-            week_start_y = intv_end_y + 28
+            week_start_y = intv_end_y + 15
             week_remain = week_total - week_used
             week_percent = (week_remain / week_total * 100) if week_total > 0 else 0
 
@@ -145,7 +145,7 @@ class QuotaDrawer:
     def _calculate_height(self, model_cards: List[Dict]) -> int:
         header_h = 70
         info_h = 90
-        card_heights = [149 if c["has_week_limit"] else 100 for c in model_cards]
+        card_heights = [136 if c["has_week_limit"] else 100 for c in model_cards]
         total_cards_h = sum(card_heights) + len(card_heights) * self.CARD_SPACING if card_heights else 0
         return (self.PADDING + header_h + self.SECTION_SPACING +
                 total_cards_h + self.SECTION_SPACING +
@@ -168,7 +168,7 @@ class QuotaDrawer:
                           card["model_name"], card["intv_used"], card["intv_total"],
                           card["intv_label"], card["week_used"], card["week_total"],
                           card["has_week_limit"])
-            card_h = 149 if card["has_week_limit"] else 100
+            card_h = 136 if card["has_week_limit"] else 100
             y_offset += card_h + self.CARD_SPACING
 
         info_h = 90
