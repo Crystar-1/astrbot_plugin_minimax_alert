@@ -8,6 +8,34 @@ from astrbot.api import logger
 
 FONT_PATH = os.path.join(os.path.dirname(__file__), "DouyinSansBold.otf")
 
+_font_cache: Dict[str, ImageFont.ImageFont] = {}
+
+
+def _load_fonts() -> Dict[str, ImageFont.ImageFont]:
+    """模块级字体单次加载"""
+    global _font_cache
+    if _font_cache:
+        return _font_cache
+    try:
+        _font_cache = {
+            "title": ImageFont.truetype(FONT_PATH, 36),
+            "model": ImageFont.truetype(FONT_PATH, 20),
+            "usage": ImageFont.truetype(FONT_PATH, 26),
+            "label": ImageFont.truetype(FONT_PATH, 13),
+            "footer": ImageFont.truetype(FONT_PATH, 12),
+        }
+    except Exception as e:
+        logger.error(f"加载字体失败: {e}")
+        default_font = ImageFont.load_default()
+        _font_cache = {
+            "title": default_font,
+            "model": default_font,
+            "usage": default_font,
+            "label": default_font,
+            "footer": default_font,
+        }
+    return _font_cache
+
 
 class QuotaDrawer:
     COLOR_BACKGROUND = (255, 255, 255)
@@ -50,22 +78,12 @@ class QuotaDrawer:
     BAR_RADIUS = 5
 
     def __init__(self) -> None:
-        self._load_fonts()
-
-    def _load_fonts(self) -> None:
-        try:
-            self.font_title = ImageFont.truetype(FONT_PATH, 36)
-            self.font_model = ImageFont.truetype(FONT_PATH, 20)
-            self.font_usage = ImageFont.truetype(FONT_PATH, 26)
-            self.font_label = ImageFont.truetype(FONT_PATH, 13)
-            self.font_footer = ImageFont.truetype(FONT_PATH, 12)
-        except Exception as e:
-            logger.error(f"加载字体失败: {e}")
-            self.font_title = ImageFont.load_default()
-            self.font_model = self.font_title
-            self.font_usage = self.font_title
-            self.font_label = self.font_title
-            self.font_footer = self.font_title
+        fonts = _load_fonts()
+        self.font_title = fonts["title"]
+        self.font_model = fonts["model"]
+        self.font_usage = fonts["usage"]
+        self.font_label = fonts["label"]
+        self.font_footer = fonts["footer"]
 
     def _draw_rounded_rect(self, draw: ImageDraw.ImageDraw, xy: tuple, radius: int, fill=None, outline=None, width: int = 1):
         x1, y1, x2, y2 = xy

@@ -16,11 +16,6 @@ class ConfigManager:
         """获取白名单管理器"""
         return self._whitelist_manager
     
-    def update_whitelist_config(self, whitelist: list[str]):
-        """更新白名单配置并持久化"""
-        self._config["whitelist"] = whitelist
-        self._whitelist_manager.set_whitelist(whitelist)
-    
     def get_api_key(self) -> str:
         """获取 API Key"""
         return self._config.get("api_key", "")

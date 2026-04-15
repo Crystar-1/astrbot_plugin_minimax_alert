@@ -9,20 +9,19 @@ class QueryError(Exception):
     pass
 
 
-ERROR_MESSAGES = {
-    400: ("请求参数错误", "请检查 API Key 和配置是否正确"),
-    401: ("认证失败", "API Key 无效或已过期，请检查配置"),
-    403: ("无访问权限", "该 API Key 没有访问权限，请确认账户状态"),
-    404: ("接口不存在", "API 地址有误，请检查版本配置"),
-    429: ("请求过于频繁", "已达 API 调用限制，请稍后再试"),
-    500: ("服务器内部错误", "MiniMax 服务器异常，请稍后重试"),
-    502: ("网关错误", "MiniMax 服务暂时不可用，请稍后重试"),
-    503: ("服务不可用", "MiniMax 服务维护中，请稍后重试"),
-}
-
-
 class MiniMaxAPI:
     """MiniMax API 客户端"""
+    
+    ERROR_MESSAGES: dict[int, tuple[str, str]] = {
+        400: ("请求参数错误", "请检查 API Key 和配置是否正确"),
+        401: ("认证失败", "API Key 无效或已过期，请检查配置"),
+        403: ("无访问权限", "该 API Key 没有访问权限，请确认账户状态"),
+        404: ("接口不存在", "API 地址有误，请检查版本配置"),
+        429: ("请求过于频繁", "已达 API 调用限制，请稍后再试"),
+        500: ("服务器内部错误", "MiniMax 服务器异常，请稍后重试"),
+        502: ("网关错误", "MiniMax 服务暂时不可用，请稍后重试"),
+        503: ("服务不可用", "MiniMax 服务维护中，请稍后重试"),
+    }
     
     def __init__(self):
         self._session: aiohttp.ClientSession | None = None
@@ -80,7 +79,7 @@ class MiniMaxAPI:
                         logger.error(f"JSON 解析失败: {str(e)}")
                         raise QueryError("API 返回数据格式异常，请稍后重试") from e
                 else:
-                    title, suggestion = ERROR_MESSAGES.get(
+                    title, suggestion = self.ERROR_MESSAGES.get(
                         response.status, ("未知错误", "请稍后重试")
                     )
                     logger.error(f"API 请求失败: 状态码={response.status}, title={title}, suggestion={suggestion}")

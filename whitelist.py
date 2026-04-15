@@ -15,24 +15,6 @@ class WhitelistManager:
             return True
         return user_sid in self._whitelist
     
-    def add_to_whitelist(self, user_sid: str) -> bool:
-        """添加用户到白名单"""
-        if user_sid in self._whitelist:
-            return False
-        self._whitelist.append(user_sid)
-        return True
-    
-    def remove_from_whitelist(self, user_sid: str) -> bool:
-        """从白名单移除用户"""
-        if user_sid not in self._whitelist:
-            return False
-        self._whitelist.remove(user_sid)
-        return True
-    
     def get_whitelist(self) -> list[str]:
         """获取白名单副本"""
         return self._whitelist.copy()
-    
-    def set_whitelist(self, whitelist: list[str]) -> None:
-        """设置白名单"""
-        self._whitelist = whitelist.copy() if whitelist else []
