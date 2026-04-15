@@ -98,7 +98,7 @@ class QuotaDrawer:
             draw.text((x + self.CARD_PADDING_X, y_offset), f"{intv_label}：无限额", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
         else:
             draw.text((x + self.CARD_PADDING_X, y_offset), intv_label, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-            percent_text = f"({intv_percent:.1f}%)"
+            percent_text = f"{intv_percent:.1f}%"
             bbox_label = draw.textbbox((0, 0), intv_label, font=self.font_label)
             label_w = bbox_label[2] - bbox_label[0]
             bbox_percent = draw.textbbox((0, 0), percent_text, font=self.font_label)
@@ -126,7 +126,7 @@ class QuotaDrawer:
             week_percent = (week_remain / week_total * 100) if week_total > 0 else 0
 
             draw.text((x + self.CARD_PADDING_X, y_offset), "周使用/总额", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-            percent_text = f"({week_percent:.1f}%)"
+            percent_text = f"{week_percent:.1f}%"
             bbox_label = draw.textbbox((0, 0), "周使用/总额", font=self.font_label)
             label_w = bbox_label[2] - bbox_label[0]
             bbox_percent = draw.textbbox((0, 0), percent_text, font=self.font_label)
