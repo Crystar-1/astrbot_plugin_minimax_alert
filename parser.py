@@ -191,3 +191,94 @@ class DataParser:
         lines.append("✅ 查询完成！")
         
         return "\n".join(lines)
+    
+    def parse_quota_data_markdown(self, data: Dict[str, Any]) -> str:
+        """解析配额数据并返回 Markdown 格式（用于图片渲染）"""
+        base_resp = data.get("base_resp", {})
+        status_code = base_resp.get("status_code")
+
+        if status_code is not None and status_code != 0:
+            return f"**查询失败**：{base_resp.get('status_msg', '未知错误')}"
+
+        model_list = data.get("model_remains", [])
+        if not model_list:
+            return "**查询失败**：未获取到任何额度数据"
+
+        first_model = model_list[0]
+        missing_fields = [f for f in self.REQUIRED_FIELDS if first_model.get(f) is None]
+        if missing_fields:
+            return f"**查询失败**：数据格式异常，缺少必填字段"
+
+        end_time_ms = first_model.get('end_time', 0)
+        if end_time_ms > 0:
+            china_tz = timezone(timedelta(hours=CHINA_TIMEZONE_OFFSET))
+            end_time = datetime.fromtimestamp(end_time_ms / 1000, tz=china_tz)
+            now = datetime.now(tz=china_tz)
+            delta = end_time - now
+            remains_time_minutes = max(0, int(delta.total_seconds() / 60))
+        else:
+            remains_time_minutes = 0
+
+        intv_total = first_model.get("current_interval_total_count", 0)
+        plan_name = self._get_plan_name(intv_total)
+
+        md_lines = [f"# MiniMax Token Plan {plan_name}"]
+        md_lines.append("")
+
+        for idx, model in enumerate(model_list):
+            if self._show_first_model_only and idx > 0:
+                continue
+            
+            model_name = model.get("model_name", "未知模型")
+            start_time = model.get("start_time", 0)
+            end_time = model.get("end_time", 0)
+            intv_used = model.get("current_interval_usage_count", 0)
+            intv_total = model.get("current_interval_total_count", 0)
+            week_used = model.get("current_weekly_usage_count", 0)
+            week_total = model.get("current_weekly_total_count", 0)
+            
+            if intv_total == 0 and week_total == 0 and idx > 0:
+                continue
+            
+            intv_remain = intv_total - intv_used
+            intv_percent = (intv_remain / intv_total) * 100 if intv_total > 0 else 0
+            week_remain = week_total - week_used
+            week_percent = (week_remain / week_total) * 100 if week_total > 0 else 0
+
+            model_reset_type = self._detect_reset_type(start_time, end_time)
+            if model_reset_type == "5h":
+                intv_label = "5小时使用/总额"
+            else:
+                intv_label = "日使用/总额"
+
+            md_lines.append(f"## {model_name}")
+            
+            if intv_total == 0:
+                intv_line = f"{intv_label}：0/0"
+            else:
+                intv_line = f"{intv_label}：{intv_remain}/{intv_total} ({intv_percent:.1f}%)"
+            md_lines.append(intv_line)
+            
+            if week_total == 0:
+                week_line = "周使用/总额：无周限额"
+            else:
+                week_line = f"周使用/总额：{week_remain}/{week_total} ({week_percent:.1f}%)"
+            md_lines.append(week_line)
+            md_lines.append("")
+
+        first_reset_type = self._detect_reset_type(first_model.get('start_time', 0), first_model.get('end_time', 0))
+        if first_reset_type == "5h":
+            period_name = "5小时滚动周期"
+            reset_label = "距离5小时重置"
+        elif first_reset_type == "daily":
+            period_name = "日周期"
+            reset_label = "距离日重置"
+        else:
+            period_name = "周期"
+            reset_label = "距离重置"
+        
+        md_lines.append(f"**{period_name}**：{self.format_timestamp(first_model.get('start_time', 0))} ~ {self.format_timestamp(first_model.get('end_time', 0))}")
+        md_lines.append(f"**本周周期**：{self.format_timestamp(first_model.get('weekly_start_time', 0))} ~ {self.format_timestamp(first_model.get('weekly_end_time', 0))}")
+        md_lines.append(f"**{reset_label}**：{self._format_duration(remains_time_minutes)}")
+        
+        return "\n".join(md_lines)
