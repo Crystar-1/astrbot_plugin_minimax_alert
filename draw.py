@@ -101,9 +101,9 @@ class QuotaDrawer:
             percent_text = f"{intv_percent:.1f}%"
             bbox_label = draw.textbbox((0, 0), intv_label, font=self.font_label)
             label_w = bbox_label[2] - bbox_label[0]
-            bbox_percent = draw.textbbox((0, 0), percent_text, font=self.font_label)
+            bbox_percent = draw.textbbox((0, 0), percent_text, font=self.font_usage)
             percent_w = bbox_percent[2] - bbox_percent[0]
-            draw.text((x + width - self.CARD_PADDING_X - percent_w, y_offset), percent_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+            draw.text((x + width - self.CARD_PADDING_X - percent_w, y_offset), percent_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
             y_offset += 22
             usage_text = f"{intv_remain} / {intv_total}"
@@ -129,9 +129,9 @@ class QuotaDrawer:
             percent_text = f"{week_percent:.1f}%"
             bbox_label = draw.textbbox((0, 0), "周使用/总额", font=self.font_label)
             label_w = bbox_label[2] - bbox_label[0]
-            bbox_percent = draw.textbbox((0, 0), percent_text, font=self.font_label)
+            bbox_percent = draw.textbbox((0, 0), percent_text, font=self.font_usage)
             percent_w = bbox_percent[2] - bbox_percent[0]
-            draw.text((x + width - self.CARD_PADDING_X - percent_w, y_offset), percent_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+            draw.text((x + width - self.CARD_PADDING_X - percent_w, y_offset), percent_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
             y_offset += 18
             week_text = f"{week_remain} / {week_total}"
