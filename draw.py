@@ -90,21 +90,23 @@ class QuotaDrawer:
 
         draw.text((x + self.CARD_PADDING_X, y + 15), model_name, font=self.font_model, fill=self.COLOR_TEXT_MODEL)
 
-        intv_start_y = y + 45
+        y_offset = y + 45
         intv_remain = intv_total - intv_used
         intv_percent = (intv_remain / intv_total * 100) if intv_total > 0 else 0
 
         if intv_total == 0:
-            draw.text((x + self.CARD_PADDING_X, intv_start_y), f"{intv_label}：无限额", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+            draw.text((x + self.CARD_PADDING_X, y_offset), f"{intv_label}：无限额", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
         else:
-            draw.text((x + self.CARD_PADDING_X, intv_start_y), intv_label, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+            percent_y = y + 38
+            draw.text((x + self.CARD_PADDING_X, y_offset), intv_label, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
             percent_text = f"{intv_percent:.1f}%"
-            intv_percent_y = intv_start_y + 20
+            bbox_label = draw.textbbox((0, 0), intv_label, font=self.font_label)
+            label_w = bbox_label[2] - bbox_label[0]
             bbox_percent = draw.textbbox((0, 0), percent_text, font=self.font_usage)
             percent_w = bbox_percent[2] - bbox_percent[0]
-            draw.text((x + width - self.CARD_PADDING_X - percent_w, intv_percent_y), percent_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
+            draw.text((x + width - self.CARD_PADDING_X - percent_w, percent_y), percent_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
-            y_offset = intv_start_y + 40
+            y_offset += 28
             bar_x = x + self.CARD_PADDING_X
             bar_y = y_offset
             bar_w = width - self.CARD_PADDING_X * 2
@@ -117,7 +119,7 @@ class QuotaDrawer:
                 self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 5, fill=progress_color)
 
         if has_week_limit:
-            intv_end_y = intv_start_y + 40 + 10
+            intv_end_y = y + 45 + 28 + 10
             week_start_y = intv_end_y + 15
             week_percent_y = intv_end_y + 8
             week_remain = week_total - week_used
