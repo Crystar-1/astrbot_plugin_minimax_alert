@@ -75,9 +75,9 @@ class QuotaDrawer:
             draw.line([(x2, y1 + radius), (x2, y2 - radius)], fill=outline, width=width)
 
     def _get_progress_color(self, percent: float) -> tuple:
-        if percent >= 60:
+        if percent < 60:
             return self.COLOR_PROGRESS_HIGH
-        elif percent >= 30:
+        elif percent < 80:
             return self.COLOR_PROGRESS_MED
         return self.COLOR_PROGRESS_LOW
 
@@ -142,7 +142,7 @@ class QuotaDrawer:
             self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + bar_w, bar_y + bar_h), 5, fill=self.COLOR_PROGRESS_BG)
             fill_w = int(bar_w * min(week_percent / 100, 1.0))
             if fill_w > 0:
-                self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 5, fill=self.COLOR_PROGRESS_MED)
+                self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 5, fill=self._get_progress_color(week_percent))
 
     def _calculate_height(self, model_cards: List[Dict]) -> int:
         header_h = 70
