@@ -1,7 +1,6 @@
 import io
 import os
-import textwrap
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 
 from PIL import Image, ImageDraw, ImageFont
 from astrbot.api import logger
@@ -16,13 +15,11 @@ class QuotaDrawer:
     COLOR_CARD_BG = (255, 255, 255)
     COLOR_CARD_BORDER = (220, 225, 235)
     COLOR_TEXT_TITLE = (30, 30, 30)
-    COLOR_TEXT_SUBTITLE = (100, 100, 100)
     COLOR_TEXT_MODEL = (0, 60, 130)
     COLOR_TEXT_USAGE = (50, 50, 50)
     COLOR_TEXT_LABEL = (120, 120, 120)
     COLOR_ACCENT = (0, 120, 220)
     COLOR_PROGRESS_BG = (230, 235, 242)
-    COLOR_PROGRESS_FILL = (0, 120, 220)
     COLOR_PROGRESS_HIGH = (60, 180, 100)
     COLOR_PROGRESS_MED = (240, 180, 60)
     COLOR_PROGRESS_LOW = (220, 60, 60)
@@ -31,7 +28,6 @@ class QuotaDrawer:
     IMG_WIDTH = 600
     PADDING = 25
     CARD_PADDING_X = 15
-    CARD_PADDING_Y = 12
     CARD_SPACING = 15
     CARD_CORNER_RADIUS = 12
     CARD_WIDTH = IMG_WIDTH - PADDING * 2
@@ -44,7 +40,6 @@ class QuotaDrawer:
     def _load_fonts(self) -> None:
         try:
             self.font_title = ImageFont.truetype(FONT_PATH, 28)
-            self.font_subtitle = ImageFont.truetype(FONT_PATH, 14)
             self.font_model = ImageFont.truetype(FONT_PATH, 16)
             self.font_usage = ImageFont.truetype(FONT_PATH, 22)
             self.font_label = ImageFont.truetype(FONT_PATH, 12)
@@ -52,18 +47,10 @@ class QuotaDrawer:
         except Exception as e:
             logger.error(f"加载字体失败: {e}")
             self.font_title = ImageFont.load_default()
-            self.font_subtitle = self.font_title
             self.font_model = self.font_title
             self.font_usage = self.font_title
             self.font_label = self.font_title
             self.font_footer = self.font_title
-
-    def _get_text_size(self, draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont) -> tuple:
-        try:
-            bbox = draw.textbbox((0, 0), text, font=font)
-            return bbox[2] - bbox[0], bbox[3] - bbox[1]
-        except AttributeError:
-            return draw.textlength(text, font=font), font.size
 
     def _draw_rounded_rect(self, draw: ImageDraw.ImageDraw, xy: tuple, radius: int, fill=None, outline=None, width: int = 1):
         x1, y1, x2, y2 = xy
@@ -119,11 +106,11 @@ class QuotaDrawer:
             bar_w = width - self.CARD_PADDING_X * 2
             bar_h = 8
 
-            draw.rounded_rectangle((bar_x, bar_y, bar_x + bar_w, bar_y + bar_h), radius=4, fill=self.COLOR_PROGRESS_BG)
+            self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + bar_w, bar_y + bar_h), 4, fill=self.COLOR_PROGRESS_BG)
             fill_w = int(bar_w * min(intv_percent / 100, 1.0))
             if fill_w > 0:
                 progress_color = self._get_progress_color(intv_percent)
-                draw.rounded_rectangle((bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), radius=4, fill=progress_color)
+                self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 4, fill=progress_color)
 
         if has_week_limit:
             y_offset = y + 80 if intv_total == 0 else y + 100
@@ -138,22 +125,29 @@ class QuotaDrawer:
             bar_w = width - self.CARD_PADDING_X * 2
             bar_h = 8
 
-            draw.rounded_rectangle((bar_x, bar_y, bar_x + bar_w, bar_y + bar_h), radius=4, fill=self.COLOR_PROGRESS_BG)
+            self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + bar_w, bar_y + bar_h), 4, fill=self.COLOR_PROGRESS_BG)
             fill_w = int(bar_w * min(week_percent / 100, 1.0))
             if fill_w > 0:
-                draw.rounded_rectangle((bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), radius=4, fill=self.COLOR_PROGRESS_MED)
+                self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 4, fill=self.COLOR_PROGRESS_MED)
 
-    def draw_quota_image(self, plan_name: str, model_cards: List[Dict[str, Any]], 
-                        period_text: str, week_period_text: str, reset_text: str) -> bytes:
-        temp_img = Image.new("RGB", (self.IMG_WIDTH, 100), color=self.COLOR_BACKGROUND)
-        draw = ImageDraw.Draw(temp_img)
+    def _calculate_height(self, model_cards: List[Dict]) -> int:
+        header_h = 60
+        info_h = 75
+        card_heights = [120 if c["has_week_limit"] else 90 for c in model_cards]
+        total_cards_h = sum(card_heights) + len(card_heights) * self.CARD_SPACING if card_heights else 0
+        return (self.PADDING + header_h + self.SECTION_SPACING +
+                total_cards_h + self.SECTION_SPACING +
+                info_h + self.SECTION_SPACING +
+                self.FOOTER_HEIGHT + self.PADDING)
 
+    def _draw_all(self, draw: ImageDraw.ImageDraw, plan_name: str, model_cards: List[Dict],
+                  period_text: str, week_period_text: str, reset_text: str):
         y_offset = self.PADDING
 
         header_h = 60
-        draw.rounded_rectangle((0, y_offset, self.IMG_WIDTH, y_offset + header_h), 
+        self._draw_rounded_rect(draw, (0, y_offset, self.IMG_WIDTH, y_offset + header_h),
                                radius=10, fill=self.COLOR_HEADER_BG)
-        draw.text((self.PADDING + 10, y_offset + 15), f"MiniMax Token Plan {plan_name}", 
+        draw.text((self.PADDING + 10, y_offset + 15), f"MiniMax Token Plan {plan_name}",
                   font=self.font_title, fill=self.COLOR_TEXT_TITLE)
         y_offset += header_h + self.SECTION_SPACING
 
@@ -177,35 +171,15 @@ class QuotaDrawer:
         bbox = draw.textbbox((0, 0), footer_text, font=self.font_footer)
         fw = bbox[2] - bbox[0]
         draw.text(((self.IMG_WIDTH - fw) // 2, y_offset + 8), footer_text, font=self.font_footer, fill=self.COLOR_FOOTER)
-        y_offset += self.FOOTER_HEIGHT + self.PADDING
 
-        img = Image.new("RGB", (self.IMG_WIDTH, y_offset), color=self.COLOR_BACKGROUND)
+    def draw_quota_image(self, plan_name: str, model_cards: List[Dict[str, Any]], 
+                        period_text: str, week_period_text: str, reset_text: str) -> bytes:
+        total_height = self._calculate_height(model_cards)
+        
+        img = Image.new("RGB", (self.IMG_WIDTH, total_height), color=self.COLOR_BACKGROUND)
         draw = ImageDraw.Draw(img)
-
-        y_offset = self.PADDING
-
-        draw.rounded_rectangle((0, y_offset, self.IMG_WIDTH, y_offset + header_h), 
-                               radius=10, fill=self.COLOR_HEADER_BG)
-        draw.text((self.PADDING + 10, y_offset + 15), f"MiniMax Token Plan {plan_name}", 
-                  font=self.font_title, fill=self.COLOR_TEXT_TITLE)
-        y_offset += header_h + self.SECTION_SPACING
-
-        for card in model_cards:
-            self._draw_card(draw, self.PADDING, y_offset, self.CARD_WIDTH,
-                          card["model_name"], card["intv_used"], card["intv_total"],
-                          card["intv_label"], card["week_used"], card["week_total"],
-                          card["has_week_limit"])
-            card_h = 120 if card["has_week_limit"] else 90
-            y_offset += card_h + self.CARD_SPACING
-
-        self._draw_rounded_rect(draw, (self.PADDING, y_offset, self.IMG_WIDTH - self.PADDING, y_offset + info_h),
-                               radius=10, fill=self.COLOR_HEADER_BG)
-        draw.text((self.PADDING + 15, y_offset + 10), period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-        draw.text((self.PADDING + 15, y_offset + 28), week_period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-        draw.text((self.PADDING + 15, y_offset + 46), reset_text, font=self.font_label, fill=self.COLOR_ACCENT)
-        y_offset += info_h + self.SECTION_SPACING
-
-        draw.text(((self.IMG_WIDTH - fw) // 2, y_offset + 8), footer_text, font=self.font_footer, fill=self.COLOR_FOOTER)
+        
+        self._draw_all(draw, plan_name, model_cards, period_text, week_period_text, reset_text)
 
         with io.BytesIO() as output:
             img.save(output, format="PNG", optimize=True)
