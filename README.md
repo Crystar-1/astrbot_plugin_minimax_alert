@@ -66,9 +66,10 @@
 
 ### 用户指令
 
-| 指令    | 说明                     | 示例    |
-| ------- | ------------------------ | ------- |
-| `/用量` | 查询当前 Token Plan 用量 | `/用量` |
+| 指令           | 说明                       | 示例         |
+| -------------- | -------------------------- | ------------ |
+| `/用量`        | 查询当前 Token Plan 用量   | `/用量`      |
+| `/用量 图片`   | 以图片模式展示用量信息     | `/用量 图片` |
 
 ---
 
@@ -100,12 +101,14 @@ astrbot_plugin_minimax_alert/
 ├── __init__.py           # 插件入口
 ├── main.py               # 插件主类、指令处理
 ├── api.py                # MiniMax API 调用封装
+├── draw.py              # 图片渲染模块
 ├── config.py             # 配置管理模块
 ├── parser.py             # 数据解析模块（含多模型支持）
 ├── whitelist.py          # 白名单管理模块
 ├── _conf_schema.json     # 配置参数定义
 ├── metadata.yaml         # 插件元信息
 ├── requirements.txt      # Python依赖
+├── DouyinSansBold.otf    # 字体文件
 ├── CHANGELOG.md         # 变更日志
 └── README.md            # 项目文档
 ```
