@@ -86,7 +86,7 @@ class QuotaDrawer:
                    week_used: int, week_total: int, has_week_limit: bool):
         card_h = 155 if has_week_limit else 110
         self._draw_rounded_rect(draw, (x, y, x + width, y + card_h), self.CARD_CORNER_RADIUS,
-                                fill=self.COLOR_CARD_BG, outline=self.CARD_BORDER, width=1)
+                                fill=self.COLOR_CARD_BG, outline=self.COLOR_CARD_BORDER, width=1)
 
         draw.text((x + self.CARD_PADDING_X, y + 15), model_name, font=self.font_model, fill=self.COLOR_TEXT_MODEL)
 
