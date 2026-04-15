@@ -7,9 +7,10 @@ from PIL import Image, ImageDraw, ImageFont
 from astrbot.api import logger
 
 
-class QuotaDrawer:
-    FONT_PATH = os.path.join(os.path.dirname(__file__), "DouyinSansBold.otf")
+FONT_PATH = os.path.join(os.path.dirname(__file__), "DouyinSansBold.otf")
 
+
+class QuotaDrawer:
     COLOR_BACKGROUND = (255, 255, 255)
     COLOR_HEADER_BG = (245, 247, 250)
     COLOR_CARD_BG = (255, 255, 255)
@@ -42,12 +43,12 @@ class QuotaDrawer:
 
     def _load_fonts(self) -> None:
         try:
-            self.font_title = ImageFont.truetype(self.FONT_PATH, 28)
-            self.font_subtitle = ImageFont.truetype(self.FONT_PATH, 14)
-            self.font_model = ImageFont.truetype(self.FONT_PATH, 16)
-            self.font_usage = ImageFont.truetype(self.FONT_PATH, 22)
-            self.font_label = ImageFont.truetype(self.FONT_PATH, 12)
-            self.font_footer = ImageFont.truetype(self.FONT_PATH, 11)
+            self.font_title = ImageFont.truetype(FONT_PATH, 28)
+            self.font_subtitle = ImageFont.truetype(FONT_PATH, 14)
+            self.font_model = ImageFont.truetype(FONT_PATH, 16)
+            self.font_usage = ImageFont.truetype(FONT_PATH, 22)
+            self.font_label = ImageFont.truetype(FONT_PATH, 12)
+            self.font_footer = ImageFont.truetype(FONT_PATH, 11)
         except Exception as e:
             logger.error(f"加载字体失败: {e}")
             self.font_title = ImageFont.load_default()

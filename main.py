@@ -1,6 +1,7 @@
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
 from astrbot.api import AstrBotConfig, logger
+from astrbot.core.message.components import Image
 
 from .api import MiniMaxAPI, QueryError
 from .config import ConfigManager
@@ -63,7 +64,7 @@ class MiniMaxAlertPlugin(Star):
                         week_period_text=draw_data["week_period_text"],
                         reset_text=draw_data["reset_text"],
                     )
-                    yield event.image_result(img_bytes, "image/png")
+                    yield event.chain_result([Image.fromBytes(img_bytes)])
                     logger.info("图片渲染成功")
                 except Exception as e:
                     logger.error(f"图片渲染失败: {str(e)}")
