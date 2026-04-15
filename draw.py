@@ -17,7 +17,7 @@ class QuotaDrawer:
     COLOR_TEXT_TITLE = (30, 30, 30)
     COLOR_TEXT_MODEL = (0, 60, 130)
     COLOR_TEXT_USAGE = (50, 50, 50)
-    COLOR_TEXT_LABEL = (120, 120, 120)
+    COLOR_TEXT_LABEL = (100, 100, 100)
     COLOR_ACCENT = (0, 120, 220)
     COLOR_PROGRESS_BG = (230, 235, 242)
     COLOR_PROGRESS_HIGH = (60, 180, 100)
@@ -25,25 +25,25 @@ class QuotaDrawer:
     COLOR_PROGRESS_LOW = (220, 60, 60)
     COLOR_FOOTER = (130, 130, 130)
 
-    IMG_WIDTH = 600
-    PADDING = 25
-    CARD_PADDING_X = 15
-    CARD_SPACING = 15
-    CARD_CORNER_RADIUS = 12
+    IMG_WIDTH = 800
+    PADDING = 30
+    CARD_PADDING_X = 20
+    CARD_SPACING = 18
+    CARD_CORNER_RADIUS = 14
     CARD_WIDTH = IMG_WIDTH - PADDING * 2
-    SECTION_SPACING = 20
-    FOOTER_HEIGHT = 35
+    SECTION_SPACING = 25
+    FOOTER_HEIGHT = 40
 
     def __init__(self) -> None:
         self._load_fonts()
 
     def _load_fonts(self) -> None:
         try:
-            self.font_title = ImageFont.truetype(FONT_PATH, 28)
-            self.font_model = ImageFont.truetype(FONT_PATH, 16)
-            self.font_usage = ImageFont.truetype(FONT_PATH, 22)
-            self.font_label = ImageFont.truetype(FONT_PATH, 12)
-            self.font_footer = ImageFont.truetype(FONT_PATH, 11)
+            self.font_title = ImageFont.truetype(FONT_PATH, 36)
+            self.font_model = ImageFont.truetype(FONT_PATH, 20)
+            self.font_usage = ImageFont.truetype(FONT_PATH, 28)
+            self.font_label = ImageFont.truetype(FONT_PATH, 14)
+            self.font_footer = ImageFont.truetype(FONT_PATH, 12)
         except Exception as e:
             logger.error(f"加载字体失败: {e}")
             self.font_title = ImageFont.load_default()
@@ -84,13 +84,13 @@ class QuotaDrawer:
     def _draw_card(self, draw: ImageDraw.ImageDraw, x: int, y: int, width: int, model_name: str,
                    intv_used: int, intv_total: int, intv_label: str,
                    week_used: int, week_total: int, has_week_limit: bool):
-        card_h = 120 if has_week_limit else 90
+        card_h = 140 if has_week_limit else 105
         self._draw_rounded_rect(draw, (x, y, x + width, y + card_h), self.CARD_CORNER_RADIUS,
                                 fill=self.COLOR_CARD_BG, outline=self.COLOR_CARD_BORDER, width=1)
 
-        draw.text((x + self.CARD_PADDING_X, y + 12), model_name, font=self.font_model, fill=self.COLOR_TEXT_MODEL)
+        draw.text((x + self.CARD_PADDING_X, y + 15), model_name, font=self.font_model, fill=self.COLOR_TEXT_MODEL)
 
-        y_offset = y + 38
+        y_offset = y + 45
         intv_remain = intv_total - intv_used
         intv_percent = (intv_remain / intv_total * 100) if intv_total > 0 else 0
 
@@ -98,42 +98,42 @@ class QuotaDrawer:
             draw.text((x + self.CARD_PADDING_X, y_offset), f"{intv_label}：无限额", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
         else:
             draw.text((x + self.CARD_PADDING_X, y_offset), f"{intv_label}", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-            y_offset += 16
+            y_offset += 20
             draw.text((x + self.CARD_PADDING_X, y_offset), f"{intv_remain} / {intv_total}", font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
             bar_x = x + self.CARD_PADDING_X
-            bar_y = y_offset + 26
+            bar_y = y_offset + 32
             bar_w = width - self.CARD_PADDING_X * 2
-            bar_h = 8
+            bar_h = 10
 
-            self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + bar_w, bar_y + bar_h), 4, fill=self.COLOR_PROGRESS_BG)
+            self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + bar_w, bar_y + bar_h), 5, fill=self.COLOR_PROGRESS_BG)
             fill_w = int(bar_w * min(intv_percent / 100, 1.0))
             if fill_w > 0:
                 progress_color = self._get_progress_color(intv_percent)
-                self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 4, fill=progress_color)
+                self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 5, fill=progress_color)
 
         if has_week_limit:
-            y_offset = y + 80 if intv_total == 0 else y + 100
+            y_offset = y + 95 if intv_total == 0 else y + 118
             week_remain = week_total - week_used
             week_percent = (week_remain / week_total * 100) if week_total > 0 else 0
 
             draw.text((x + self.CARD_PADDING_X, y_offset), f"周使用/总额", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-            draw.text((x + self.CARD_PADDING_X + 75, y_offset), f"{week_remain} / {week_total}", font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
+            draw.text((x + self.CARD_PADDING_X + 90, y_offset), f"{week_remain} / {week_total}", font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
             bar_x = x + self.CARD_PADDING_X
-            bar_y = y_offset + 18
+            bar_y = y_offset + 22
             bar_w = width - self.CARD_PADDING_X * 2
-            bar_h = 8
+            bar_h = 10
 
-            self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + bar_w, bar_y + bar_h), 4, fill=self.COLOR_PROGRESS_BG)
+            self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + bar_w, bar_y + bar_h), 5, fill=self.COLOR_PROGRESS_BG)
             fill_w = int(bar_w * min(week_percent / 100, 1.0))
             if fill_w > 0:
-                self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 4, fill=self.COLOR_PROGRESS_MED)
+                self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 5, fill=self.COLOR_PROGRESS_MED)
 
     def _calculate_height(self, model_cards: List[Dict]) -> int:
-        header_h = 60
-        info_h = 75
-        card_heights = [120 if c["has_week_limit"] else 90 for c in model_cards]
+        header_h = 70
+        info_h = 85
+        card_heights = [140 if c["has_week_limit"] else 105 for c in model_cards]
         total_cards_h = sum(card_heights) + len(card_heights) * self.CARD_SPACING if card_heights else 0
         return (self.PADDING + header_h + self.SECTION_SPACING +
                 total_cards_h + self.SECTION_SPACING +
@@ -144,10 +144,10 @@ class QuotaDrawer:
                   period_text: str, week_period_text: str, reset_text: str):
         y_offset = self.PADDING
 
-        header_h = 60
+        header_h = 70
         self._draw_rounded_rect(draw, (0, y_offset, self.IMG_WIDTH, y_offset + header_h),
-                               radius=10, fill=self.COLOR_HEADER_BG)
-        draw.text((self.PADDING + 10, y_offset + 15), f"MiniMax Token Plan {plan_name}",
+                               radius=12, fill=self.COLOR_HEADER_BG)
+        draw.text((self.PADDING + 15, y_offset + 18), f"MiniMax Token Plan {plan_name}",
                   font=self.font_title, fill=self.COLOR_TEXT_TITLE)
         y_offset += header_h + self.SECTION_SPACING
 
@@ -156,21 +156,21 @@ class QuotaDrawer:
                           card["model_name"], card["intv_used"], card["intv_total"],
                           card["intv_label"], card["week_used"], card["week_total"],
                           card["has_week_limit"])
-            card_h = 120 if card["has_week_limit"] else 90
+            card_h = 140 if card["has_week_limit"] else 105
             y_offset += card_h + self.CARD_SPACING
 
-        info_h = 75
+        info_h = 85
         self._draw_rounded_rect(draw, (self.PADDING, y_offset, self.IMG_WIDTH - self.PADDING, y_offset + info_h),
-                               radius=10, fill=self.COLOR_HEADER_BG)
-        draw.text((self.PADDING + 15, y_offset + 10), period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-        draw.text((self.PADDING + 15, y_offset + 28), week_period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-        draw.text((self.PADDING + 15, y_offset + 46), reset_text, font=self.font_label, fill=self.COLOR_ACCENT)
+                               radius=12, fill=self.COLOR_HEADER_BG)
+        draw.text((self.PADDING + 20, y_offset + 12), period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+        draw.text((self.PADDING + 20, y_offset + 34), week_period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+        draw.text((self.PADDING + 20, y_offset + 56), reset_text, font=self.font_label, fill=self.COLOR_ACCENT)
         y_offset += info_h + self.SECTION_SPACING
 
         footer_text = "查询完成"
         bbox = draw.textbbox((0, 0), footer_text, font=self.font_footer)
         fw = bbox[2] - bbox[0]
-        draw.text(((self.IMG_WIDTH - fw) // 2, y_offset + 8), footer_text, font=self.font_footer, fill=self.COLOR_FOOTER)
+        draw.text(((self.IMG_WIDTH - fw) // 2, y_offset + 10), footer_text, font=self.font_footer, fill=self.COLOR_FOOTER)
 
     def draw_quota_image(self, plan_name: str, model_cards: List[Dict[str, Any]], 
                         period_text: str, week_period_text: str, reset_text: str) -> bytes:
