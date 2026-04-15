@@ -198,16 +198,33 @@ class DataParser:
         status_code = base_resp.get("status_code")
 
         if status_code is not None and status_code != 0:
-            return f"**查询失败**：{base_resp.get('status_msg', '未知错误')}"
+            error_msg = base_resp.get("status_msg", "未知错误")
+            error_msg_lower = error_msg.lower()
+            error_map = {
+                "invalid_token": "API Key 无效，请检查配置",
+                "token_expired": "API Key 已过期，请重新获取",
+                "quota_exceeded": "额度已用尽，请等待重置",
+                "rate_limited": "请求过于频繁，请稍后重试",
+                "group_not_found": "Group ID 不存在，请检查配置",
+                "permission_denied": "无权限访问，请确认账户状态",
+            }
+            for key, msg in error_map.items():
+                if key in error_msg_lower:
+                    logger.error(f"API 返回业务错误: {msg} ({error_msg})")
+                    raise QueryError(f"API 返回错误：{msg}（{error_msg}）")
+            logger.error(f"API 返回未知错误: {error_msg} (状态码: {status_code})")
+            raise QueryError(f"API 返回错误：{error_msg}（状态码：{status_code}）")
 
         model_list = data.get("model_remains", [])
         if not model_list:
-            return "**查询失败**：未获取到任何额度数据"
+            logger.warning("model_remains 列表为空")
+            raise QueryError("未获取到任何额度数据，接口返回格式可能已变更")
 
         first_model = model_list[0]
         missing_fields = [f for f in self.REQUIRED_FIELDS if first_model.get(f) is None]
         if missing_fields:
-            return f"**查询失败**：数据格式异常，缺少必填字段"
+            logger.warning(f"缺少必填字段: {missing_fields}")
+            raise QueryError(f"数据格式异常，缺少必填字段: {', '.join(missing_fields)}")
 
         end_time_ms = first_model.get('end_time', 0)
         if end_time_ms > 0:
