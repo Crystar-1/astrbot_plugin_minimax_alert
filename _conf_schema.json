@@ -50,13 +50,5 @@
         "obvious_hint": false,
         "default": false,
         "category": "display"
-    },
-    "image_render_enabled": {
-        "description": "启用图片渲染功能",
-        "type": "bool",
-        "hint": "开启后用户可通过发送「/用量 图片」命令获取图片形式的用量展示。需要安装 pillowmd 依赖。",
-        "obvious_hint": false,
-        "default": true,
-        "category": "display"
     }
 }

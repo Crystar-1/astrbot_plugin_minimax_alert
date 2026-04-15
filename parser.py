@@ -192,8 +192,8 @@ class DataParser:
         
         return "\n".join(lines)
     
-    def parse_quota_data_markdown(self, data: Dict[str, Any]) -> str:
-        """解析配额数据并返回 Markdown 格式（用于图片渲染）"""
+    def parse_quota_data_for_draw(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """解析配额数据并返回用于图片绘制的数据结构"""
         base_resp = data.get("base_resp", {})
         status_code = base_resp.get("status_code")
 
@@ -239,9 +239,7 @@ class DataParser:
         intv_total = first_model.get("current_interval_total_count", 0)
         plan_name = self._get_plan_name(intv_total)
 
-        md_lines = [f"# MiniMax Token Plan {plan_name}"]
-        md_lines.append("")
-
+        model_cards = []
         for idx, model in enumerate(model_list):
             if self._show_first_model_only and idx > 0:
                 continue
@@ -257,31 +255,21 @@ class DataParser:
             if intv_total == 0 and week_total == 0 and idx > 0:
                 continue
             
-            intv_remain = intv_total - intv_used
-            intv_percent = (intv_remain / intv_total) * 100 if intv_total > 0 else 0
-            week_remain = week_total - week_used
-            week_percent = (week_remain / week_total) * 100 if week_total > 0 else 0
-
             model_reset_type = self._detect_reset_type(start_time, end_time)
             if model_reset_type == "5h":
                 intv_label = "5小时使用/总额"
             else:
                 intv_label = "日使用/总额"
 
-            md_lines.append(f"## {model_name}")
-            
-            if intv_total == 0:
-                intv_line = f"{intv_label}：0/0"
-            else:
-                intv_line = f"{intv_label}：{intv_remain}/{intv_total} ({intv_percent:.1f}%)"
-            md_lines.append(intv_line)
-            
-            if week_total == 0:
-                week_line = "周使用/总额：无周限额"
-            else:
-                week_line = f"周使用/总额：{week_remain}/{week_total} ({week_percent:.1f}%)"
-            md_lines.append(week_line)
-            md_lines.append("")
+            model_cards.append({
+                "model_name": model_name,
+                "intv_used": intv_used,
+                "intv_total": intv_total,
+                "intv_label": intv_label,
+                "week_used": week_used,
+                "week_total": week_total,
+                "has_week_limit": week_total > 0,
+            })
 
         first_reset_type = self._detect_reset_type(first_model.get('start_time', 0), first_model.get('end_time', 0))
         if first_reset_type == "5h":
@@ -293,9 +281,11 @@ class DataParser:
         else:
             period_name = "周期"
             reset_label = "距离重置"
-        
-        md_lines.append(f"**{period_name}**：{self.format_timestamp(first_model.get('start_time', 0))} ~ {self.format_timestamp(first_model.get('end_time', 0))}")
-        md_lines.append(f"**本周周期**：{self.format_timestamp(first_model.get('weekly_start_time', 0))} ~ {self.format_timestamp(first_model.get('weekly_end_time', 0))}")
-        md_lines.append(f"**{reset_label}**：{self._format_duration(remains_time_minutes)}")
-        
-        return "\n".join(md_lines)
+
+        return {
+            "plan_name": plan_name,
+            "model_cards": model_cards,
+            "period_text": f"{period_name}：{self.format_timestamp(first_model.get('start_time', 0))} ~ {self.format_timestamp(first_model.get('end_time', 0))}",
+            "week_period_text": f"本周周期：{self.format_timestamp(first_model.get('weekly_start_time', 0))} ~ {self.format_timestamp(first_model.get('weekly_end_time', 0))}",
+            "reset_text": f"{reset_label}：{self._format_duration(remains_time_minutes)}",
+        }

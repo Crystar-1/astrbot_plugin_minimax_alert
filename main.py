@@ -6,7 +6,7 @@ from .api import MiniMaxAPI, QueryError
 from .config import ConfigManager
 from .parser import DataParser
 from .whitelist import WhitelistManager
-from .renderer import get_renderer, PILLYMD_AVAILABLE
+from .draw import draw_quota_image
 
 
 @register("astrbot_plugin_minimax_alert", "MiniMax_Alert", "查询 MiniMax Token Plan API 用量信息", "v1.3.1")
@@ -24,27 +24,16 @@ class MiniMaxAlertPlugin(Star):
         await self._api.initialize()
     
     def _check_whitelist(self, event: AstrMessageEvent) -> bool:
-        """
-        检查用户是否在白名单中
-
-        Args:
-            event: 消息事件
-
-        Returns:
-            True 如果用户允许访问
-        """
         user_sid = str(event.session_id)
         whitelist_manager = self._config_manager.get_whitelist()
         return whitelist_manager.check_whitelist(user_sid)
     
     def _use_image_mode(self, event: AstrMessageEvent) -> bool:
-        """检测是否使用图片模式"""
         msg = event.message_str
         return "图片" in msg
     
     @filter.command("用量")
     async def query_quota(self, event: AstrMessageEvent):
-        """查询配额命令"""
         if not self._check_whitelist(event):
             yield event.plain_result("⚠️ 该功能仅对白名单用户开放")
             return
@@ -65,18 +54,20 @@ class MiniMaxAlertPlugin(Star):
             quota_data = await self._api.fetch_quota(api_key, region, group_id)
             
             if use_image:
-                result = self._parser.parse_quota_data_markdown(quota_data)
-                if not PILLYMD_AVAILABLE:
-                    yield event.plain_result("⚠️ 图片渲染功能未启用，请安装 pillowmd 依赖")
-                    return
-                
                 try:
-                    renderer = get_renderer()
-                    img_io = renderer.render_to_bytesio(result)
-                    yield event.image_result(img_io, "image/png")
+                    draw_data = self._parser.parse_quota_data_for_draw(quota_data)
+                    img_bytes = draw_quota_image(
+                        plan_name=draw_data["plan_name"],
+                        model_cards=draw_data["model_cards"],
+                        period_text=draw_data["period_text"],
+                        week_period_text=draw_data["week_period_text"],
+                        reset_text=draw_data["reset_text"],
+                    )
+                    yield event.image_result(img_bytes, "image/png")
                     logger.info("图片渲染成功")
                 except Exception as e:
                     logger.error(f"图片渲染失败: {str(e)}")
+                    result = self._parser.parse_quota_data(quota_data)
                     yield event.plain_result(f"⚠️ 图片渲染失败：{str(e)}\n\n{result}")
             else:
                 result = self._parser.parse_quota_data(quota_data)
