@@ -120,6 +120,7 @@ class QuotaDrawer:
         if has_week_limit:
             intv_end_y = y + 45 + 28 + 10
             week_start_y = intv_end_y + 15
+            week_percent_y = (intv_end_y + week_start_y + 38) // 2
             week_remain = week_total - week_used
             week_percent = (week_remain / week_total * 100) if week_total > 0 else 0
 
@@ -129,7 +130,7 @@ class QuotaDrawer:
             label_w = bbox_label[2] - bbox_label[0]
             bbox_percent = draw.textbbox((0, 0), percent_text, font=self.font_usage)
             percent_w = bbox_percent[2] - bbox_percent[0]
-            draw.text((x + width - self.CARD_PADDING_X - percent_w, week_start_y), percent_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
+            draw.text((x + width - self.CARD_PADDING_X - percent_w, week_percent_y), percent_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
             y_offset = week_start_y + 28
             bar_x = x + self.CARD_PADDING_X
