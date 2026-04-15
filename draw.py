@@ -17,7 +17,7 @@ class QuotaDrawer:
     COLOR_TEXT_TITLE = (30, 30, 30)
     COLOR_TEXT_MODEL = (0, 60, 130)
     COLOR_TEXT_USAGE = (50, 50, 50)
-    COLOR_TEXT_LABEL = (100, 100, 100)
+    COLOR_TEXT_LABEL = (120, 120, 120)
     COLOR_ACCENT = (0, 120, 220)
     COLOR_PROGRESS_BG = (230, 235, 242)
     COLOR_PROGRESS_HIGH = (60, 180, 100)
@@ -28,7 +28,7 @@ class QuotaDrawer:
     IMG_WIDTH = 800
     PADDING = 30
     CARD_PADDING_X = 20
-    CARD_SPACING = 18
+    CARD_SPACING = 20
     CARD_CORNER_RADIUS = 14
     CARD_WIDTH = IMG_WIDTH - PADDING * 2
     SECTION_SPACING = 25
@@ -41,8 +41,8 @@ class QuotaDrawer:
         try:
             self.font_title = ImageFont.truetype(FONT_PATH, 36)
             self.font_model = ImageFont.truetype(FONT_PATH, 20)
-            self.font_usage = ImageFont.truetype(FONT_PATH, 28)
-            self.font_label = ImageFont.truetype(FONT_PATH, 14)
+            self.font_usage = ImageFont.truetype(FONT_PATH, 26)
+            self.font_label = ImageFont.truetype(FONT_PATH, 13)
             self.font_footer = ImageFont.truetype(FONT_PATH, 12)
         except Exception as e:
             logger.error(f"加载字体失败: {e}")
@@ -84,9 +84,9 @@ class QuotaDrawer:
     def _draw_card(self, draw: ImageDraw.ImageDraw, x: int, y: int, width: int, model_name: str,
                    intv_used: int, intv_total: int, intv_label: str,
                    week_used: int, week_total: int, has_week_limit: bool):
-        card_h = 140 if has_week_limit else 105
+        card_h = 155 if has_week_limit else 110
         self._draw_rounded_rect(draw, (x, y, x + width, y + card_h), self.CARD_CORNER_RADIUS,
-                                fill=self.COLOR_CARD_BG, outline=self.COLOR_CARD_BORDER, width=1)
+                                fill=self.COLOR_CARD_BG, outline=self.CARD_BORDER, width=1)
 
         draw.text((x + self.CARD_PADDING_X, y + 15), model_name, font=self.font_model, fill=self.COLOR_TEXT_MODEL)
 
@@ -97,12 +97,13 @@ class QuotaDrawer:
         if intv_total == 0:
             draw.text((x + self.CARD_PADDING_X, y_offset), f"{intv_label}：无限额", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
         else:
-            draw.text((x + self.CARD_PADDING_X, y_offset), f"{intv_label}", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-            y_offset += 20
-            draw.text((x + self.CARD_PADDING_X, y_offset), f"{intv_remain} / {intv_total}", font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
+            draw.text((x + self.CARD_PADDING_X, y_offset), intv_label, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+            y_offset += 22
+            usage_text = f"{intv_remain} / {intv_total}"
+            draw.text((x + self.CARD_PADDING_X, y_offset), usage_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
             bar_x = x + self.CARD_PADDING_X
-            bar_y = y_offset + 32
+            bar_y = y_offset + 28
             bar_w = width - self.CARD_PADDING_X * 2
             bar_h = 10
 
@@ -113,12 +114,14 @@ class QuotaDrawer:
                 self._draw_rounded_rect(draw, (bar_x, bar_y, bar_x + fill_w, bar_y + bar_h), 5, fill=progress_color)
 
         if has_week_limit:
-            y_offset = y + 95 if intv_total == 0 else y + 118
+            y_offset = y + 110 if intv_total == 0 else y + 130
             week_remain = week_total - week_used
             week_percent = (week_remain / week_total * 100) if week_total > 0 else 0
 
-            draw.text((x + self.CARD_PADDING_X, y_offset), f"周使用/总额", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-            draw.text((x + self.CARD_PADDING_X + 90, y_offset), f"{week_remain} / {week_total}", font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
+            draw.text((x + self.CARD_PADDING_X, y_offset), "周使用/总额", font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+            y_offset += 18
+            week_text = f"{week_remain} / {week_total}"
+            draw.text((x + self.CARD_PADDING_X, y_offset), week_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
             bar_x = x + self.CARD_PADDING_X
             bar_y = y_offset + 22
@@ -132,8 +135,8 @@ class QuotaDrawer:
 
     def _calculate_height(self, model_cards: List[Dict]) -> int:
         header_h = 70
-        info_h = 85
-        card_heights = [140 if c["has_week_limit"] else 105 for c in model_cards]
+        info_h = 90
+        card_heights = [155 if c["has_week_limit"] else 110 for c in model_cards]
         total_cards_h = sum(card_heights) + len(card_heights) * self.CARD_SPACING if card_heights else 0
         return (self.PADDING + header_h + self.SECTION_SPACING +
                 total_cards_h + self.SECTION_SPACING +
@@ -156,15 +159,15 @@ class QuotaDrawer:
                           card["model_name"], card["intv_used"], card["intv_total"],
                           card["intv_label"], card["week_used"], card["week_total"],
                           card["has_week_limit"])
-            card_h = 140 if card["has_week_limit"] else 105
+            card_h = 155 if card["has_week_limit"] else 110
             y_offset += card_h + self.CARD_SPACING
 
-        info_h = 85
+        info_h = 90
         self._draw_rounded_rect(draw, (self.PADDING, y_offset, self.IMG_WIDTH - self.PADDING, y_offset + info_h),
                                radius=12, fill=self.COLOR_HEADER_BG)
-        draw.text((self.PADDING + 20, y_offset + 12), period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-        draw.text((self.PADDING + 20, y_offset + 34), week_period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
-        draw.text((self.PADDING + 20, y_offset + 56), reset_text, font=self.font_label, fill=self.COLOR_ACCENT)
+        draw.text((self.PADDING + 20, y_offset + 15), period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+        draw.text((self.PADDING + 20, y_offset + 38), week_period_text, font=self.font_label, fill=self.COLOR_TEXT_LABEL)
+        draw.text((self.PADDING + 20, y_offset + 61), reset_text, font=self.font_label, fill=self.COLOR_ACCENT)
         y_offset += info_h + self.SECTION_SPACING
 
         footer_text = "查询完成"
