@@ -130,8 +130,9 @@ class QuotaDrawer:
             percent_w = bbox_percent[2] - bbox_percent[0]
             draw.text((x + width - self.CARD_PADDING_X - percent_w, y_offset), percent_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
+            y_offset += 28
             bar_x = x + self.CARD_PADDING_X
-            bar_y = y_offset + 22
+            bar_y = y_offset
             bar_w = width - self.CARD_PADDING_X * 2
             bar_h = 10
 
