@@ -91,8 +91,15 @@ class QuotaMonitor:
             self._last_check_time = datetime.now()
             self._last_check_value = current_percent
 
-            if self._should_notify(current_percent):
+            should_notify = self._should_notify(current_percent)
+
+            if self._state == MonitorState.LOCKED and should_notify:
                 await self._send_alert(current_percent)
+                self._state = MonitorState.TRIGGERED
+                logger.info(f"用量超过阈值 {self._threshold}%，已触发报警，切换到TRIGGERED状态")
+            elif self._state == MonitorState.TRIGGERED and not should_notify:
+                self._state = MonitorState.LOCKED
+                logger.info(f"用量降至阈值以下，重新ARM")
         except QueryError as e:
             logger.error(f"检查配额失败: {str(e)}")
         except Exception as e:
@@ -106,6 +113,9 @@ class QuotaMonitor:
                 await self._check_and_notify()
             except asyncio.CancelledError:
                 break
+            except Exception as e:
+                logger.error(f"监控循环异常: {str(e)}，5分钟后重试")
+                await asyncio.sleep(5 * 60)
 
     async def stop(self) -> str:
         if self._state == MonitorState.STOPPED:
