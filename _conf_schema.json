@@ -50,5 +50,29 @@
         "obvious_hint": false,
         "default": false,
         "category": "display"
+    },
+    "monitor_default_threshold": {
+        "description": "默认报警阈值（百分比）",
+        "type": "int",
+        "hint": "使用量超过此百分比时触发报警，如80表示80%",
+        "obvious_hint": false,
+        "default": 80,
+        "category": "monitor"
+    },
+    "monitor_default_interval": {
+        "description": "默认检测间隔（分钟）",
+        "type": "int",
+        "hint": "远离阈值时的检测间隔，最短间隔需小于此值",
+        "obvious_hint": false,
+        "default": 30,
+        "category": "monitor"
+    },
+    "monitor_min_interval": {
+        "description": "最短检测间隔（分钟）",
+        "type": "int",
+        "hint": "接近阈值时的最短检测间隔",
+        "obvious_hint": false,
+        "default": 5,
+        "category": "monitor"
     }
 }
