@@ -13,7 +13,7 @@ except ImportError:
     logger.warning("pillowmd 未安装，图片渲染功能将不可用")
 
 
-STYLE_DIR = os.path.join(os.path.dirname(__file__), "styles", "minimax_theme")
+STYLE_DIR = os.path.join(os.path.dirname(__file__), "styles")
 FONT_PATH = os.path.join(os.path.dirname(__file__), "DouyinSansBold.otf")
 WHITE_BG_PATH = os.path.join(STYLE_DIR, "white.png")
 
