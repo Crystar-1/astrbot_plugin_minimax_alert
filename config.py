@@ -35,3 +35,11 @@ class ConfigManager:
     def get_show_first_model_only(self) -> bool:
         """获取是否仅显示第一个模型配置"""
         return self._config.get("show_first_model_only", False)
+    
+    def get_default_interval(self) -> int:
+        """获取默认检测间隔（分钟）"""
+        return self._config.get("monitor_default_interval", 30)
+    
+    def get_min_interval(self) -> int:
+        """获取最短检测间隔（分钟）"""
+        return self._config.get("monitor_min_interval", 5)

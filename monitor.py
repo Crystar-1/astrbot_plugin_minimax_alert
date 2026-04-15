@@ -102,7 +102,7 @@ class QuotaMonitor:
         while True:
             try:
                 interval = self._calculate_interval()
-                await asyncio.sleep(interval)
+                await asyncio.sleep(interval * 60)
                 await self._check_and_notify()
             except asyncio.CancelledError:
                 break
