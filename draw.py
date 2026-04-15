@@ -120,7 +120,7 @@ class QuotaDrawer:
         if has_week_limit:
             intv_end_y = y + 45 + 28 + 10
             week_start_y = intv_end_y + 15
-            week_percent_y = (intv_end_y + week_start_y + 38) // 2
+            week_percent_y = intv_end_y + 17
             week_remain = week_total - week_used
             week_percent = (week_remain / week_total * 100) if week_total > 0 else 0
 
