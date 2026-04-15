@@ -105,12 +105,7 @@ class QuotaDrawer:
             percent_w = bbox_percent[2] - bbox_percent[0]
             draw.text((x + width - self.CARD_PADDING_X - percent_w, y_offset), percent_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
-            y_offset += 22
-            usage_text = f"{intv_remain} / {intv_total}"
-            draw.text((x + self.CARD_PADDING_X, y_offset), usage_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
-
-            bar_x = x + self.CARD_PADDING_X
-            bar_y = y_offset + 26
+            y_offset += 28
             bar_w = width - self.CARD_PADDING_X * 2
             bar_h = 10
 
@@ -133,12 +128,8 @@ class QuotaDrawer:
             percent_w = bbox_percent[2] - bbox_percent[0]
             draw.text((x + width - self.CARD_PADDING_X - percent_w, y_offset), percent_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
 
-            y_offset += 18
-            week_text = f"{week_remain} / {week_total}"
-            draw.text((x + self.CARD_PADDING_X, y_offset), week_text, font=self.font_usage, fill=self.COLOR_TEXT_USAGE)
-
             bar_x = x + self.CARD_PADDING_X
-            bar_y = y_offset + 20
+            bar_y = y_offset + 22
             bar_w = width - self.CARD_PADDING_X * 2
             bar_h = 10
 
