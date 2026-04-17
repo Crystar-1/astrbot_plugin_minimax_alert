@@ -1,44 +1,72 @@
+"""
+MiniMax API 客户端
+封装用量查询接口请求与响应处理
+"""
+
 import aiohttp
-from datetime import datetime, timezone, timedelta
 from typing import Dict, Any
 from astrbot.api import logger
 
 
 class QueryError(Exception):
     """查询业务异常"""
-    pass
+
+
+# HTTP 状态码对应的错误提示
+ERROR_MESSAGES: dict[int, tuple[str, str]] = {
+    400: ("请求参数错误", "请检查 API Key 和配置是否正确"),
+    401: ("认证失败", "API Key 无效或已过期，请检查配置"),
+    403: ("无访问权限", "该 API Key 没有访问权限，请确认账户状态"),
+    404: ("接口不存在", "API 地址有误，请检查版本配置"),
+    429: ("请求过于频繁", "已达 API 调用限制，请稍后再试"),
+    500: ("服务器内部错误", "MiniMax 服务器异常，请稍后重试"),
+    502: ("网关错误", "MiniMax 服务暂时不可用，请稍后重试"),
+    503: ("服务不可用", "MiniMax 服务维护中，请稍后重试"),
+}
 
 
 class MiniMaxAPI:
     """MiniMax API 客户端"""
-    
-    ERROR_MESSAGES: dict[int, tuple[str, str]] = {
-        400: ("请求参数错误", "请检查 API Key 和配置是否正确"),
-        401: ("认证失败", "API Key 无效或已过期，请检查配置"),
-        403: ("无访问权限", "该 API Key 没有访问权限，请确认账户状态"),
-        404: ("接口不存在", "API 地址有误，请检查版本配置"),
-        429: ("请求过于频繁", "已达 API 调用限制，请稍后再试"),
-        500: ("服务器内部错误", "MiniMax 服务器异常，请稍后重试"),
-        502: ("网关错误", "MiniMax 服务暂时不可用，请稍后重试"),
-        503: ("服务不可用", "MiniMax 服务维护中，请稍后重试"),
-    }
-    
+
     def __init__(self):
         self._session: aiohttp.ClientSession | None = None
-    
+
+    # ------------------- 生命周期 -------------------
+
     async def initialize(self):
         """初始化 API 客户端"""
         logger.info("MiniMax Alert 插件初始化中...")
         await self._ensure_session()
-    
+
+    async def terminate(self):
+        """关闭会话"""
+        if self._session and not self._session.closed:
+            logger.info("正在关闭 ClientSession...")
+            await self._session.close()
+            self._session = None
+            logger.info("ClientSession 已关闭")
+        else:
+            logger.info("ClientSession 无需关闭（已为空或已关闭）")
+
+    # ------------------- 内部方法 -------------------
+
     async def _ensure_session(self):
-        """确保 session 存在"""
+        """确保 session 存在，懒加载"""
         if self._session is None or self._session.closed:
             logger.info("创建懒初始化 ClientSession")
             self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10))
-    
+
     def _get_api_url(self, region: str, group_id: str) -> tuple[str, Dict[str, str]]:
-        """获取 API URL 和参数"""
+        """
+        获取 API URL 和查询参数
+
+        Args:
+            region: "国内" 或 "国际"
+            group_id: 国际版必填
+
+        Returns:
+            (url, params) 元组
+        """
         params: Dict[str, str] = {}
         if region == "国内":
             url = "https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains"
@@ -50,25 +78,35 @@ class MiniMaxAPI:
         else:
             raise ValueError("REGION 请选择 '国内' 或 '国际'")
         return url, params
-    
+
+    # ------------------- 业务方法 -------------------
+
     async def fetch_quota(self, api_key: str, region: str, group_id: str) -> Dict[str, Any]:
         """
         获取配额信息
+
+        Args:
+            api_key: MiniMax API 密钥
+            region: "国内" 或 "国际"
+            group_id: 国际版分组 ID
+
+        Returns:
+            API 返回的配额数据字典
         """
         await self._ensure_session()
-        
+
         url, params = self._get_api_url(region, group_id)
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
-        
+
         logger.info(f"发起 API 请求: url={url}, params={params}")
-        
+
         try:
             async with self._session.get(url, headers=headers, params=params) as response:
                 logger.info(f"收到响应状态码: {response.status}")
-                
+
                 if response.status == 200:
                     try:
                         data = await response.json()
@@ -79,17 +117,17 @@ class MiniMaxAPI:
                         logger.error(f"JSON 解析失败: {str(e)}")
                         raise QueryError("API 返回数据格式异常，请稍后重试") from e
                 else:
-                    title, suggestion = self.ERROR_MESSAGES.get(
+                    title, suggestion = ERROR_MESSAGES.get(
                         response.status, ("未知错误", "请稍后重试")
                     )
                     logger.error(f"API 请求失败: 状态码={response.status}, title={title}, suggestion={suggestion}")
-                    
+
                     try:
                         error_data = await response.json()
                         detail = error_data.get("base_resp", {}).get("status_msg", "")
                     except Exception:
                         detail = await response.text()
-                    
+
                     error_msg = f"{title}：{detail}" if detail else title
                     error_msg_full = f"{error_msg}\n💡 建议：{suggestion}"
                     logger.error(f"API 错误详情: {error_msg_full}")
@@ -105,13 +143,3 @@ class MiniMaxAPI:
         except Exception as e:
             logger.error(f"未知错误: {str(e)}")
             raise QueryError(f"请求失败：{str(e)}") from e
-    
-    async def terminate(self):
-        """关闭会话"""
-        if self._session and not self._session.closed:
-            logger.info("正在关闭 ClientSession...")
-            await self._session.close()
-            self._session = None
-            logger.info("ClientSession 已关闭")
-        else:
-            logger.info("ClientSession 无需关闭（已为空或已关闭）")

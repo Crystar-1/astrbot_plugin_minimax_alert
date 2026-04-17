@@ -38,6 +38,7 @@ def _load_fonts() -> Dict[str, ImageFont.ImageFont]:
 
 
 class QuotaDrawer:
+    # 颜色配置
     COLOR_BACKGROUND = (255, 255, 255)
     COLOR_HEADER_BG = (245, 247, 250)
     COLOR_CARD_BG = (255, 255, 255)
@@ -48,11 +49,12 @@ class QuotaDrawer:
     COLOR_TEXT_LABEL = (120, 120, 120)
     COLOR_ACCENT = (0, 120, 220)
     COLOR_PROGRESS_BG = (230, 235, 242)
-    COLOR_PROGRESS_HIGH = (60, 180, 100)
-    COLOR_PROGRESS_MED = (240, 180, 60)
-    COLOR_PROGRESS_LOW = (220, 60, 60)
+    COLOR_PROGRESS_HIGH = (60, 180, 100)   # 绿色 - 充足
+    COLOR_PROGRESS_MED = (240, 180, 60)     # 黄色 - 预警
+    COLOR_PROGRESS_LOW = (220, 60, 60)     # 红色 - 紧张
     COLOR_FOOTER = (130, 130, 130)
 
+    # 尺寸配置
     IMG_WIDTH = 800
     PADDING = 30
     CARD_PADDING_X = 20
@@ -62,11 +64,13 @@ class QuotaDrawer:
     SECTION_SPACING = 25
     FOOTER_HEIGHT = 40
 
+    # 卡片高度
     CARD_HEIGHT_WITH_WEEK = 146
     CARD_HEIGHT_WITHOUT_WEEK = 100
     HEADER_HEIGHT = 70
     INFO_HEIGHT = 90
 
+    # 卡片内部布局
     CARD_MODEL_NAME_Y = 15
     CARD_LABEL_START_Y = 45
     CARD_BAR_Y_OFFSET = 28
@@ -74,6 +78,7 @@ class QuotaDrawer:
     CARD_WEEK_START_OFFSET = 15
     CARD_WEEK_PERCENT_OFFSET = 8
 
+    # 进度条
     BAR_HEIGHT = 10
     BAR_RADIUS = 5
 
